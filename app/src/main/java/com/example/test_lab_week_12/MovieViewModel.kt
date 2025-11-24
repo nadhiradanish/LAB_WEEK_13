@@ -26,19 +26,19 @@ class MovieViewModel(private val movieRepository: MovieRepository)
 
     // fetch movies from the API
     private fun fetchPopularMovies() {
-
         viewModelScope.launch(Dispatchers.IO) {
-
             movieRepository.fetchMovies()
                 .catch { e ->
-                    // catch is a terminal operator that catches exceptions from the Flow
                     _error.value = "An exception occurred: ${e.message}"
                 }
                 .collect { movies ->
-                    // collect is a terminal operator that collects the values from the Flow
-                    // the results are emitted to the StateFlow
-                    _popularMovies.value = movies
+                    // FILTERING DI SINI 🔥
+                    val filteredMovies = movies
+                        .sortedByDescending { it.popularity } // filter populer paling tinggi
+
+                    _popularMovies.value = filteredMovies
                 }
         }
     }
+
 }
