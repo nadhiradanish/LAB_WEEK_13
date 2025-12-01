@@ -4,24 +4,33 @@ import android.app.Application
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import com.example.lab_week_13.api.MovieService
-
+import com.example.lab_week_13.database.MovieDatabase
 
 class MovieApplication : Application() {
+
+    // Jangan inisialisasi database di sini!
+    // Karena applicationContext masih null pada tahap ini
+    lateinit var movieDatabase: MovieDatabase
+        private set
+
     lateinit var movieRepository: MovieRepository
+        private set
+
     override fun onCreate() {
         super.onCreate()
-// create a Retrofit instance
+
+        // ✔ Inisialisasi database DI SINI
+        movieDatabase = MovieDatabase.getInstance(applicationContext)
+
+        // ✔ Retrofit instance
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
-// create a MovieService instance
-// and bind the MovieService interface to the Retrofit instance
-// this allows us to make API calls
-        val movieService = retrofit.create(
-            MovieService::class.java
-        )
-// create a MovieRepository instance
-        movieRepository = MovieRepository(movieService)
+
+        val movieService = retrofit.create(MovieService::class.java)
+
+        // ✔ Repository instance
+        movieRepository = MovieRepository(movieService, movieDatabase)
     }
 }
