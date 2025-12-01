@@ -1,0 +1,97 @@
+1. Why is MVVM important? Which files represent Model, which files represent View, and which files represent ViewModel?
+MVVM (Model–View–ViewModel) penting karena:
+- Memisahkan logic aplikasi dari tampilan (UI)
+- Membuat kode lebih rapi, mudah dikelola, dan scalable
+- View tidak langsung menyentuh data—semua lewat ViewModel
+- Mengurangi bug karena UI tidak bercampur dengan logic
+- Lebih mudah untuk melakukan unit testing
+
+Pembagian file di project kamu
+MODEL
+Semua file yang berhubungan dengan data dan struktur data:
+Movie.kt, MovieDao.kt, MovieDatabase.kt, MovieRepository.kt
+
+VIEW
+Semua yang menampilkan UI dan berinteraksi dengan user:
+MainActivity.kt, DetailsActivity.kt, view_movie_item.xml, activity_main.xml, RecyclerView Adapter → MovieAdapter.kt
+
+VIEWMODEL
+MovieViewModel.kt
+
+
+2. In Part 1, you implemented Data Binding, why is this more efficient than using the normal method?
+    1) Tidak perlu lagi memanggil findViewById()
+       -> Binding langsung menghubungkan XML dengan variabel di Kotlin.
+    2) UI otomatis update ketika data berubah
+       -> Jika menggunakan LiveData atau StateFlow, UI memperbarui diri otomatis tanpa kode tambahan.
+    3) Mengurangi boilerplate code
+       -> Kode jadi lebih bersih dan mudah dibaca.
+    4) Mengurangi risiko bug NullPointerException
+       -> Karena binding menjamin reference ke view sudah aman.
+    5) Memungkinkan “two-way binding”
+       -> Input user bisa langsung mengubah data di ViewModel.
+
+
+3.  In Part 2, you implemented the Singleton Pattern, why is this important?
+    Singleton Pattern penting karena memastikan bahwa kelas seperti MovieDatabase
+    dan MovieRepository hanya memiliki satu instance sepanjang aplikasi berjalan.
+
+    Pada Room Database, memiliki satu instance sangat krusial untuk mencegah konflik akses data,
+    menghindari penggunaan memori berlebih, dan mencegah potensi deadlock.
+
+    Dengan menerapkan Singleton, seluruh Activity dan ViewModel menggunakan database
+    dan repository yang sama sehingga akses data menjadi lebih konsisten.
+
+    Selain itu, Repository cukup dibuat satu kali agar tidak boros resource ketika dipanggil
+    dari berbagai bagian aplikasi.
+
+    Pola ini membuat pengelolaan data lebih efisien, aman, dan stabil.
+
+
+
+4.  In Part 2 & 3, you implemented the Repository Pattern, why is this important?
+    Repository adalah lapisan penengah antara: UI / ViewModel <—> Data sources (API + Database)
+
+    Repository penting karena:
+
+    1) Memisahkan ViewModel dari detail sumber data
+    ViewModel tidak perlu tahu apakah data dari API atau Room—semua diserahkan ke Repository.
+
+    2)  Dapat menggabungkan beberapa sumber data
+    Misalnya:
+    - ambil data lokal dulu dari Room
+    - lalu update data terbaru dari Retrofit
+
+    3) Mudah untuk testing
+    Repository bisa diganti dengan fake/mock data.
+
+    4) Mencegah duplikasi kode
+    Logic API dan database hanya ditulis satu kali.
+
+
+
+5. In part 3, you implemented the Worker Manager, is there another way to refresh
+   your database with the latest data other than using Worker?
+
+    Ya, ada beberapa alternatif:
+
+    1. Manual Refresh dari UI
+    Misalnya tombol “Pull to Refresh” atau swipe gesture.
+
+    2. Coroutine/Timer di ViewModel
+    Menggunakan:
+       - delay()
+       - Ticker
+       - Flow.interval
+    ➡ Tapi cara ini hanya berjalan selama app terbuka (tidak background).
+
+    3. AlarmManager
+    Bisa menjalankan refresh terjadwal, bahkan setelah reboot.
+    Namun tidak se-efisien WorkManager.
+
+    4. Firebase Cloud Messaging (Push Update)
+    Server mengirim notification trigger untuk fetch data baru.
+
+    5. LiveData/Flow Observer database
+    Jika API di-trigger secara manual, Room otomatis update UI.
+
