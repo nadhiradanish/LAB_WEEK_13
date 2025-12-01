@@ -1,15 +1,15 @@
 package com.example.lab_week_13
 
 import android.app.Application
+import androidx.work.*
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import com.example.lab_week_13.api.MovieService
 import com.example.lab_week_13.database.MovieDatabase
+import java.util.concurrent.TimeUnit
 
 class MovieApplication : Application() {
 
-    // Jangan inisialisasi database di sini!
-    // Karena applicationContext masih null pada tahap ini
     lateinit var movieDatabase: MovieDatabase
         private set
 
@@ -19,10 +19,10 @@ class MovieApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // ✔ Inisialisasi database DI SINI
+        // ✔ Init Database
         movieDatabase = MovieDatabase.getInstance(applicationContext)
 
-        // ✔ Retrofit instance
+        // ✔ Init Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
             .addConverterFactory(MoshiConverterFactory.create())
@@ -30,7 +30,30 @@ class MovieApplication : Application() {
 
         val movieService = retrofit.create(MovieService::class.java)
 
-        // ✔ Repository instance
+        // ✔ Init Repository
         movieRepository = MovieRepository(movieService, movieDatabase)
+
+        // ✔ NOW setup WorkManager here
+        setupBackgroundWorker()
+    }
+
+    private fun setupBackgroundWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val workRequest = PeriodicWorkRequestBuilder<MovieWorker>(
+            1, TimeUnit.HOURS
+        )
+            .setConstraints(constraints)
+            .addTag("movie-work")
+            .build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniquePeriodicWork(
+                "movie-work",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
     }
 }
